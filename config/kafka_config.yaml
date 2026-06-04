@@ -1,0 +1,13 @@
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "PLAINTEXT"
+  topics:
+    - name: "raw.iot.sensor.events"
+      partitions: 12
+      replication_factor: 1
+    - name: "raw.clickstream.events"
+      partitions: 12
+      replication_factor: 1
+    - name: "processed.aggregates"
+      partitions: 6
+      replication_factor: 1

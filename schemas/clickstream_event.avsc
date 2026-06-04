@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "ClickstreamEvent",
+  "namespace": "com.streaming.pipeline",
+  "fields": [
+    {"name": "user_id", "type": "string"},
+    {"name": "page", "type": "string"},
+    {"name": "action", "type": "string"},
+    {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis"}
+  ]
+}

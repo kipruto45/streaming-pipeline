@@ -1,0 +1,21 @@
+FROM flink:1.18.0-scala_2.12
+
+# Install python and pip
+RUN apt-get update && apt-get install -y python3 python3-pip python3-dev && rm -rf /var/lib/apt/lists/*
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+WORKDIR /app
+
+# Download Postgres JDBC driver
+RUN apt-get update && apt-get install -y wget && \
+    wget https://jdbc.postgresql.org/download/postgresql-42.7.2.jar -P /opt/flink/lib/ && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY processors/requirements.txt .
+RUN pip3 install --no-cache-dir --default-timeout=1000 -r requirements.txt
+
+COPY . .
+
+ENV PYTHONPATH=/app
+
+# Flink jobs are usually submitted via flink run, but this image can be used for taskmanagers too

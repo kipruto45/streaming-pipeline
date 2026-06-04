@@ -1,0 +1,10 @@
+flink:
+  jobmanager:
+    rpc_address: "localhost"
+    rpc_port: 6123
+  parallelism:
+    default: 4
+  checkpointing:
+    interval: 60000
+    mode: "exactly_once"
+  state_backend: "rocksdb"

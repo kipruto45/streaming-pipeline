@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "SensorEvent",
+  "namespace": "com.streaming.pipeline",
+  "fields": [
+    {"name": "sensor_id", "type": "string"},
+    {"name": "type", "type": "string"},
+    {"name": "value", "type": "float"},
+    {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis"}
+  ]
+}

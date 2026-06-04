@@ -1,0 +1,34 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "title": "Throughput (events/sec)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "rate(kafka_topic_partition_current_offset[1m])" }]
+    },
+    {
+      "title": "Anomaly Rate",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum(rate(anomaly_alerts_total[5m]))" }]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["streaming", "production"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Real-Time Streaming Pipeline",
+  "uid": "rt-streaming-01",
+  "version": 1,
+  "weekStart": ""
+}
