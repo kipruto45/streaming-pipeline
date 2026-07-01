@@ -9,3 +9,11 @@ scrape_configs:
   - job_name: 'flink'
     static_configs:
       - targets: ['flink-jobmanager:8081']
+
+  - job_name: 'dlq-consumer'
+    static_configs:
+      - targets: ['dlq-consumer:8002']
+
+  - job_name: 'mpesa-producer'
+    static_configs:
+      - targets: ['mpesa-producer:8003']

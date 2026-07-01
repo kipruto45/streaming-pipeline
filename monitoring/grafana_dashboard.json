@@ -8,27 +8,87 @@
   "liveNow": true,
   "panels": [
     {
-      "title": "Throughput (events/sec)",
       "type": "timeseries",
+      "title": "M-Pesa Throughput",
       "datasource": "Prometheus",
-      "targets": [{ "expr": "rate(kafka_topic_partition_current_offset[1m])" }]
+      "targets": [
+        {
+          "expr": "sum(rate(mpesa_events_produced_total[1m]))",
+          "legendFormat": "M-Pesa TPS"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
     },
     {
-      "title": "Anomaly Rate",
-      "type": "stat",
+      "type": "timeseries",
+      "title": "M-Pesa Failures",
       "datasource": "Prometheus",
-      "targets": [{ "expr": "sum(rate(anomaly_alerts_total[5m]))" }]
+      "targets": [
+        {
+          "expr": "sum(rate(mpesa_events_produced_total{status=\"FAILED\"}[5m]))",
+          "legendFormat": "failed txs/sec"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "DLQ Events",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(dlq_events_total[5m]))",
+          "legendFormat": "events/sec"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "DLQ Poison Pills",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(dlq_poison_pill_total[5m]))",
+          "legendFormat": "poison pills/sec"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "type": "timeseries",
+      "title": "M-Pesa Transactions by Type",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(mpesa_events_produced_total[5m])) by (transaction_type)",
+          "legendFormat": "{{transaction_type}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "type": "stat",
+      "title": "Total M-Pesa Events Produced",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(mpesa_events_produced_total)",
+          "legendFormat": "total produced"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
     }
   ],
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["streaming", "production"],
+  "tags": ["streaming", "production", "mpesa", "monitoring"],
   "templating": { "list": [] },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
-  "timezone": "",
+  "timezone": "browser",
   "title": "Real-Time Streaming Pipeline",
   "uid": "rt-streaming-01",
-  "version": 1,
-  "weekStart": ""
+  "version": 2,
+  "weekStart": "Mon"
 }

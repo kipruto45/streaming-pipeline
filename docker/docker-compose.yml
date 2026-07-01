@@ -106,6 +106,31 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
+  mpesa-producer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.producer
+    depends_on:
+      - kafka
+    entrypoint: ["python", "producers/mpesa_producer.py"]
+    ports:
+      - "8003:8003"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      PROMETHEUS_METRICS_PORT: "8003"
+
+  dlq-consumer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.producer
+    depends_on:
+      - kafka
+    entrypoint: ["python", "consumers/dlq_consumer.py"]
+    ports:
+      - "8002:8002"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
   alert-consumer:
     build:
       context: ..

@@ -9,6 +9,8 @@
 - CI pipeline for linting, type checking, unit tests, integration tests, and Docker builds
 - Topic configuration for the full Kafka topic catalog
 - Schema evolution regression tests
+- Grafana observability with M-Pesa throughput, failure, and DLQ dashboards
+- Compose services for `mpesa-producer` and `dlq-consumer`
 
 ### Changed
 - Split production and development dependencies

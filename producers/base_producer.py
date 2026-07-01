@@ -1,10 +1,11 @@
 import abc
-import structlog
 import os
+import structlog
 from confluent_kafka import Producer
 from confluent_kafka.serialization import StringSerializer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
+from prometheus_client import start_http_server
 from config.settings import settings
 
 log = structlog.get_logger()
@@ -33,6 +34,14 @@ class BaseProducer(abc.ABC):
             
         self.producer = Producer(self.conf)
         self.log = log.bind(topic=topic)
+
+        metrics_port = os.getenv("PROMETHEUS_METRICS_PORT")
+        if metrics_port:
+            try:
+                start_http_server(int(metrics_port))
+                self.log.info("Prometheus metrics server started", port=metrics_port)
+            except ValueError:
+                self.log.error("Invalid PROMETHEUS_METRICS_PORT", port=metrics_port)
 
     def delivery_report(self, err, msg):
         if err:

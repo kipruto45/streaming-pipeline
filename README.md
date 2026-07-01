@@ -6,7 +6,19 @@
 [![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.6-black)](https://kafka.apache.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-oriented streaming platform for IoT, clickstream, and M-Pesa transaction events. The system ingests Avro-encoded records, processes them with Apache Flink, and publishes aggregates, anomalies, and dead-letter events to downstream systems.
+A production-ready event streaming pipeline with IoT, clickstream, and M-Pesa ingestion, Avro schema enforcement, Apache Flink processing, and resilient sink architecture.
+
+## Overview
+
+This repository demonstrates a complete streaming architecture with:
+
+- Avro-encoded producers for IoT, clickstream, and M-Pesa events
+- Schema Registry compatibility and evolution testing
+- Kafka topic catalog with dev/prod replication settings
+- PyFlink aggregation and anomaly detection
+- PostgreSQL and Redis sinks for persistent and real-time data
+- Dead-letter queue consumer for failed event handling
+- GitHub Actions CI for linting, type checking, and tests
 
 ## Architecture
 
@@ -30,28 +42,24 @@ flowchart LR
 
 ## Key Engineering Decisions
 
-1. Flink over Spark Streaming: Flink offers true stateful per-key processing with sub-second latency and low overhead, which is ideal for windowed aggregations and anomaly detection.
-2. Avro + Schema Registry over JSON: Avro gives a compact binary format and schema enforcement, while Schema Registry makes backward and forward compatibility checks explicit.
-3. Redis for real-time state vs. PostgreSQL only: PostgreSQL is excellent for durable historical analytics, but Redis provides the low-latency state required for dashboards and live counters.
-4. Z-score threshold rationale: A threshold of 3.0 is a strong default for normally distributed data and translates to roughly a 0.3% false-positive rate; it remains configurable through the environment.
-5. DLQ design: Poison pills and other processing failures are isolated from the main pipeline so normal traffic continues flowing while operators investigate issues.
+- **Flink over Spark Streaming**: true stateful per-key processing with low latency and no micro-batching overhead.
+- **Avro + Schema Registry**: strict schema enforcement, compact binary payloads, and safe schema evolution.
+- **Redis for real-time state**: Redis is used for sub-second dashboards while PostgreSQL stores durable historical aggregates.
+- **Z-score threshold rationale**: the default `3.0` keeps false positives low for normally-distributed metrics and remains configurable.
+- **DLQ isolation**: failed events are routed to a dedicated dead-letter topic and consumer, preventing pipeline blockage.
 
-## Benchmarks
+## What’s Included
 
-Run `make load-test` to reproduce these results on your hardware.
-
-| Scenario | Events/sec | P99 Latency | Notes |
-| --- | ---: | ---: | --- |
-| IoT + clickstream | 1000 | < 150 ms | Local Docker deployment |
-| M-Pesa burst | 500 | < 200 ms | Business-hours spike profile |
-
-## M-Pesa Pipeline
-
-The M-Pesa producer targets the Kenyan FinTech context, where transaction volume is heavy, business-hours spikes are common, and reversal workflows require careful handling. The pipeline uses sender-level partitioning and short retention for financial data so downstream systems can react quickly while respecting data sensitivity.
-
-## Schema Evolution
-
-The repository includes schema versions in [schemas](schemas) and a compatibility test in [tests/test_schema_evolution.py](tests/test_schema_evolution.py). The v1 to v2 migration example shows how new optional fields can be introduced without breaking existing readers.
+- `requirements.txt` and `requirements-dev.txt`
+- `pyproject.toml` with `mypy`, `black`, and `pytest` settings
+- `config/topics.yaml` for Kafka topic definitions
+- `scripts/create_topics.sh` for YAML-driven topic creation
+- `consumers/dlq_consumer.py` with observability and graceful shutdown
+- `producers/mpesa_producer.py` with realistic Kenyan transaction generation
+- `schemas/` containing Avro v1/v2 and M-Pesa event schemas
+- `tests/test_schema_evolution.py` for compatibility testing
+- `.github/workflows/ci.yml` for CI validation
+- `CHANGELOG.md` and `SECURITY.md`
 
 ## Getting Started
 
@@ -86,9 +94,36 @@ make test-unit
 make test-integration
 ```
 
-## Repository Topics
+## M-Pesa Context
 
-The repository owner can set the following GitHub topics manually:
+This pipeline includes a dedicated M-Pesa transaction stream to model Kenyan FinTech behavior. It supports:
+
+- realistic Safaricom MSISDN ranges (`2547...`, `2541...`)
+- business-hours spikes
+- P2P, Paybill, Till, withdrawal, and deposit transaction types
+- failure reason handling and short retention for sensitive data
+
+## Schema Evolution
+
+The `schemas/` folder contains versioned Avro definitions. `tests/test_schema_evolution.py` verifies backward and forward compatibility.
+
+## Benchmarks
+
+Run `make load-test` to reproduce locally.
+
+| Scenario | Events/sec | P99 Latency | Notes |
+| --- | ---: | ---: | --- |
+| IoT + clickstream | 1000 | < 150 ms | Local Docker deployment |
+| M-Pesa burst | 500 | < 200 ms | Business-hours spike profile |
+
+## Monitoring
+
+- Grafana dashboards in `monitoring/` with M-Pesa throughput, status, and DLQ panels
+- Prometheus scrapes the DLQ consumer and M-Pesa producer metrics
+- DLQ consumer metrics available on port `8002`
+- M-Pesa producer metrics available on port `8003`
+
+## Repository Topics
 
 - apache-kafka
 - apache-flink
