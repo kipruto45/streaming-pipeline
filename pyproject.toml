@@ -1,0 +1,19 @@
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["confluent_kafka", "pyflink", "psycopg2", "redis", "fastavro", "prometheus_client", "structlog"]
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "--cov=. --cov-report=term-missing"

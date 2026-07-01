@@ -1,0 +1,53 @@
+# Topic layout for local development and production deployment.
+# Partitioning is intentionally higher than FLINK_PARALLELISM * 3 so that keyed
+# stream processing can scale without hot partitions becoming a bottleneck.
+
+topics:
+  - name: iot.sensor.events
+    partitions: 12
+    replication_factor:
+      dev: 1
+      prod: 3
+    retention_ms: 604800000
+    cleanup_policy: delete
+
+  - name: clickstream.events
+    partitions: 12
+    replication_factor:
+      dev: 1
+      prod: 3
+    retention_ms: 604800000
+    cleanup_policy: delete
+
+  - name: processed.aggregates
+    partitions: 6
+    replication_factor:
+      dev: 1
+      prod: 3
+    retention_ms: 2592000000
+    cleanup_policy: delete
+
+  - name: alerts.anomalies
+    partitions: 3
+    replication_factor:
+      dev: 1
+      prod: 3
+    retention_ms: 2592000000
+    cleanup_policy: delete
+
+  - name: dlq.failed.events
+    partitions: 3
+    replication_factor:
+      dev: 1
+      prod: 3
+    retention_ms: 2592000000
+    cleanup_policy: delete
+
+  - name: mpesa.transactions
+    partitions: 12
+    replication_factor:
+      dev: 1
+      prod: 3
+    retention_ms: 86400000
+    cleanup_policy: delete
+    notes: "Partition key is sender_msisdn for ordering per sender"

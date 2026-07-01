@@ -1,0 +1,81 @@
+{
+  "type": "record",
+  "name": "MPesaTransaction",
+  "namespace": "streaming.pipeline.mpesa",
+  "doc": "Avro schema for M-Pesa transaction events.",
+  "fields": [
+    {
+      "name": "transaction_id",
+      "type": "string",
+      "doc": "Unique UUID for the transaction."
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "doc": "Transaction timestamp in epoch milliseconds."
+    },
+    {
+      "name": "transaction_type",
+      "type": {
+        "type": "enum",
+        "name": "TransactionType",
+        "symbols": ["PAYBILL", "TILL", "P2P", "WITHDRAWAL", "DEPOSIT", "REVERSAL"]
+      },
+      "doc": "The M-Pesa transaction subtype."
+    },
+    {
+      "name": "amount_kes",
+      "type": "double",
+      "doc": "Amount of the transaction in Kenyan shillings."
+    },
+    {
+      "name": "sender_msisdn",
+      "type": "string",
+      "doc": "Sender mobile number in the format 2547XXXXXXXX or 2541XXXXXXXX."
+    },
+    {
+      "name": "receiver_identifier",
+      "type": "string",
+      "doc": "Receiver identifier, which may be an MSISDN, Paybill number, or Till number."
+    },
+    {
+      "name": "receiver_type",
+      "type": {
+        "type": "enum",
+        "name": "ReceiverType",
+        "symbols": ["MSISDN", "PAYBILL", "TILL", "AGENT"]
+      },
+      "doc": "The receiver classification."
+    },
+    {
+      "name": "channel",
+      "type": {
+        "type": "enum",
+        "name": "Channel",
+        "symbols": ["USSD", "APP", "API", "AGENT"]
+      },
+      "doc": "Channel used to initiate the transaction."
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "Status",
+        "symbols": ["COMPLETED", "FAILED", "PENDING", "REVERSED"]
+      },
+      "doc": "Current status of the transaction."
+    },
+    {
+      "name": "network_latency_ms",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "Optional network latency observed for the transaction."
+    },
+    {
+      "name": "failure_reason",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional failure reason in case the transaction failed."
+    }
+  ]
+}

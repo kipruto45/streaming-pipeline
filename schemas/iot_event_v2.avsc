@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "IoTEvent",
+  "namespace": "streaming.pipeline.iot",
+  "doc": "Version 2 schema for IoT sensor events with additional telemetry fields.",
+  "fields": [
+    {"name": "device_id", "type": "string", "doc": "Unique device identifier."},
+    {"name": "timestamp", "type": "long", "doc": "Epoch timestamp in milliseconds."},
+    {"name": "metric_name", "type": "string", "doc": "Metric family such as temperature or humidity."},
+    {"name": "value", "type": "double", "doc": "Sensor reading value."},
+    {"name": "unit", "type": ["null", "string"], "default": null, "doc": "Optional unit for the measurement."},
+    {
+      "name": "firmware_version",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional firmware version reported by the device."
+    },
+    {
+      "name": "signal_strength_dbm",
+      "type": ["null", "float"],
+      "default": null,
+      "doc": "Optional signal strength reported in dBm."
+    }
+  ]
+}

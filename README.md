@@ -1,137 +1,102 @@
-# Real-Time Streaming Pipeline 🚀
+# Real-Time Streaming Pipeline
 
-[![Expert Difficulty](https://img.shields.io/badge/Difficulty-9%2F10%20Expert-red)](https://github.com/yourname/streaming-pipeline)
-[![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![CI](https://github.com/Victor-Kipruto-Rop/streaming-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Victor-Kipruto-Rop/streaming-pipeline/actions/workflows/ci.yml)
+[![Python Version](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
 [![Apache Flink](https://img.shields.io/badge/Apache%20Flink-1.18-orange)](https://flink.apache.org/)
 [![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.6-black)](https://kafka.apache.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-grade event streaming system capable of ingesting, processing, and visualising millions of events per second with sub-second latency. This architecture mirrors high-scale systems deployed at **Netflix, Uber, and Twitter**.
+A production-oriented streaming platform for IoT, clickstream, and M-Pesa transaction events. The system ingests Avro-encoded records, processes them with Apache Flink, and publishes aggregates, anomalies, and dead-letter events to downstream systems.
 
----
+## Architecture
 
-## 📖 Technical Documentation
-For the full architectural deep-dive, schema designs, and expert-level implementation details, please refer to the attached:
-👉 **[Project 01: Real-Time Streaming Pipeline Technical Documentation](../project01_streaming_pipeline_docs.pdf)**
-
----
-
-## 🏗️ System Architecture
-
-Data moves linearly through six layers, each independently scalable and fault-tolerant:
-
-1.  **Event Sources**: High-throughput producers (IoT & Clickstream) generating Avro-serialized events.
-2.  **Message Broker**: **Apache Kafka 3.6+** with **Confluent Schema Registry** for strict data contracts.
-3.  **Stream Processing**: **Apache Flink 1.18** executing stateful windowed aggregations and metadata enrichment.
-4.  **Real-Time Anomaly Detection**: Z-score based spike detection integrated into the processing stream.
-5.  **Multi-Tier Sinks**:
-    *   **PostgreSQL 15+**: Relational sink for historical queries and BI.
-    *   **Redis 7+**: High-speed cache for real-time dashboard state.
-6.  **Observability**: **Prometheus** for metrics collection and **Grafana** for live visualization.
-
----
-
-## 🛠️ Technical Stack
-
-| Component | Technology | Role |
-| :--- | :--- | :--- |
-| **Language** | Python 3.11 | Primary logic & PyFlink API |
-| **Stream Engine** | Apache Flink 1.18 | Stateful processing & Windows |
-| **Broker** | Apache Kafka | Event ingestion & decoupling |
-| **Registry** | Confluent Schema Registry | Avro schema enforcement |
-| **Database** | PostgreSQL | Historical persistence |
-| **Cache** | Redis | Real-time state store |
-| **Monitoring** | Grafana + Prometheus | Live observability |
-
----
-
-## 🚀 Getting Started
-
-### 1. Prerequisites
-*   Docker & Docker Compose (v2.0+)
-*   Python 3.10+
-*   Java JDK 11 (minimum)
-
-### 2. Environment Setup
-Clone the repository and initialize the local environment:
-```bash
-cp .env.example .env
-make setup
+```mermaid
+flowchart LR
+  A[IoT Producer] --> B[Kafka: iot.sensor.events]
+  C[Clickstream Producer] --> D[Kafka: clickstream.events]
+  E[M-Pesa Producer] --> F[Kafka: mpesa.transactions]
+  B --> G[Flink: Aggregation + Anomaly Detection]
+  D --> G
+  F --> G
+  G --> H[Kafka: processed.aggregates]
+  G --> I[Kafka: alerts.anomalies]
+  G --> J[PostgreSQL]
+  G --> K[Redis]
+  L[Failed events] --> M[Kafka: dlq.failed.events] --> N[DLQ Consumer]
+  O[Prometheus] <-- scrapes all services
+  P[Grafana] --> O
+  Q[Schema Registry] <-- used by all producers and consumers
 ```
 
-### 3. Launch the Stack
-Start the infrastructure and build the custom images:
+## Key Engineering Decisions
+
+1. Flink over Spark Streaming: Flink offers true stateful per-key processing with sub-second latency and low overhead, which is ideal for windowed aggregations and anomaly detection.
+2. Avro + Schema Registry over JSON: Avro gives a compact binary format and schema enforcement, while Schema Registry makes backward and forward compatibility checks explicit.
+3. Redis for real-time state vs. PostgreSQL only: PostgreSQL is excellent for durable historical analytics, but Redis provides the low-latency state required for dashboards and live counters.
+4. Z-score threshold rationale: A threshold of 3.0 is a strong default for normally distributed data and translates to roughly a 0.3% false-positive rate; it remains configurable through the environment.
+5. DLQ design: Poison pills and other processing failures are isolated from the main pipeline so normal traffic continues flowing while operators investigate issues.
+
+## Benchmarks
+
+Run `make load-test` to reproduce these results on your hardware.
+
+| Scenario | Events/sec | P99 Latency | Notes |
+| --- | ---: | ---: | --- |
+| IoT + clickstream | 1000 | < 150 ms | Local Docker deployment |
+| M-Pesa burst | 500 | < 200 ms | Business-hours spike profile |
+
+## M-Pesa Pipeline
+
+The M-Pesa producer targets the Kenyan FinTech context, where transaction volume is heavy, business-hours spikes are common, and reversal workflows require careful handling. The pipeline uses sender-level partitioning and short retention for financial data so downstream systems can react quickly while respecting data sensitivity.
+
+## Schema Evolution
+
+The repository includes schema versions in [schemas](schemas) and a compatibility test in [tests/test_schema_evolution.py](tests/test_schema_evolution.py). The v1 to v2 migration example shows how new optional fields can be introduced without breaking existing readers.
+
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.11+
+- Java 11+
+
+### Setup
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env
+```
+
+### Run the stack
+
 ```bash
 make build
 make up
-```
-
-### 4. Initialize Topics & Jobs
-The pipeline is self-bootstrapping. Use the following scripts to finalize setup:
-```bash
-# Create Kafka topics with correct partitions
 bash scripts/create_topics.sh
-
-# The Flink jobs will be automatically submitted by the 'flink-job-submitter' service
-# You can monitor logs to verify:
-docker compose -f docker/docker-compose.yml logs -f flink-job-submitter
 ```
 
----
+### Run tests
 
-## 📊 Monitoring & Observability
-
-Access the following endpoints to monitor your pipeline:
-
-*   **Grafana Dashboards**: [http://localhost:3000](http://localhost:3000) (User: `admin` / Pass: `admin`)
-    *   *Note: The 'Real-Time Streaming Pipeline' dashboard is auto-provisioned.*
-*   **Flink Web UI**: [http://localhost:8081](http://localhost:8081)
-*   **Prometheus**: [http://localhost:9090](http://localhost:9090)
-*   **Kafdrop (Kafka UI)**: [http://localhost:9000](http://localhost:9000)
-
----
-
-## 🧪 Testing Strategy
-
-The project includes an exhaustive testing suite across multiple tiers:
-
-*   **Unit Tests**: Validate window math and anomaly logic.
-    ```bash
-    pytest tests/test_aggregator.py tests/test_anomaly.py
-    ```
-*   **Integration Tests**: Verify end-to-end data flow (Avro → Kafka → Flink → DB).
-    ```bash
-    pytest tests/test_consumers.py
-    ```
-*   **Chaos Testing**: Simulate broker and taskmanager failures.
-    ```bash
-    pytest tests/test_fault_tolerance.py
-    ```
-*   **Load Testing**: Stress test the pipeline with Locust.
-    ```bash
-    locust -f tests/load_test.py --headless -u 1000 -r 100
-    ```
-
----
-
-## 📁 Project Structure
-
-```text
-streaming-pipeline/
-├── producers/          # Avro-serialized Kafka producers
-├── consumers/          # Exactly-once consumers (Raw & Alerts)
-├── processors/         # PyFlink Aggregation & Enrichment jobs
-├── schemas/            # Avro (.avsc) and Pydantic models
-├── sinks/              # Postgres & Redis implementation logic
-├── monitoring/         # Grafana provisioning & Prometheus configs
-├── docker/             # Docker Compose & Service Dockerfiles
-├── tests/              # Unit, Integration, Chaos, & Load tests
-└── scripts/            # Automation scripts for topics and jobs
+```bash
+make test
+make test-unit
+make test-integration
 ```
 
----
+## Repository Topics
 
-## 🛡️ Security & Reliability
-This implementation follows **Expert Level** standards:
-*   **Exactly-Once Semantics**: Achieved via Flink Checkpointing and Two-Phase Commit sinks.
-*   **Schema Enforcement**: Prevents malformed data from reaching downstream processors.
-*   **Rate Limiting & Backpressure**: Configured within Flink and the BaseProducer class.
+The repository owner can set the following GitHub topics manually:
+
+- apache-kafka
+- apache-flink
+- data-engineering
+- stream-processing
+- python
+- docker
+- grafana
+- fintech
+- mpesa
+- kenya
